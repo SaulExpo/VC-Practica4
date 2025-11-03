@@ -25,200 +25,175 @@ En esta práctica 4, para la preparación será necesario importar los siguiente
 
 ### Entrenar Modelo
 
-Para la detección de matrículas se ha utilizado un modelo \textbf{YOLO11s}, el cual ofrece un equilibrio adecuado entre precisión y velocidad, lo que lo hace apropiado para aplicaciones en vídeo. 
+Para la detección de matrículas se ha utilizado como punto de partida el modelo `YOLO11s`, que ofrece un buen equilibrio entre precisión y velocidad.  
+Este modelo se entrenó utilizando un conjunto de imágenes propio, anotado previamente y organizado en formato YOLO.
 
-El entrenamiento se ha realizado sobre un conjunto de datos anotado manualmente y organizado en formato \texttt{YOLO}, definido mediante el archivo \texttt{dataset/data.yaml}, que especifica las rutas a las imágenes de \textit{train} y \textit{val}, así como la clase ``matrícula''.
+El dataset cuenta con imágenes de matrículas tomadas desde distintos ángulos, distancias y condiciones de iluminación, como se muestra a continuación:
 
-Se ha llevado a cabo el entrenamiento en dos fases:
+<table align="center">
+  <tr>
+    <td><img src="https://github.com/user-attachments/assets/eac9c54a-1089-4cae-85dd-84376bfa9e3b" width="120"/></td>
+    <td><img src="https://github.com/user-attachments/assets/3056823d-8e8e-406f-a51a-ab624c45fadf" width="120"/></td>
+    <td><img src="https://github.com/user-attachments/assets/c9aa2527-cce7-4d6d-b612-e88a44fed15f" width="120"/></td>
+    <td><img src="https://github.com/user-attachments/assets/86d0ed62-0230-4504-9c10-f48939535cd9" width="120"/></td>
+    <td><img src="https://github.com/user-attachments/assets/b543cf1d-6f90-49dc-b0fe-6a63c9c95d24" width="120"/></td>
+    <td><img src="https://github.com/user-attachments/assets/35a61d12-4c21-4f5d-85cf-52779d41dffd" width="120"/></td>
+    <td><img src="https://github.com/user-attachments/assets/39108531-2410-4052-a3c9-991014f833fb" width="120"/></td>
+  </tr>
+</table>
 
-\begin{enumerate}
-    \item \textbf{Entrenamiento inicial}: búsqueda de una representación general robusta, aplicando técnicas avanzadas de aumento de datos para mejorar la capacidad de generalización.
-    \item \textbf{Fine-tuning}: ajuste fino reduciendo las transformaciones para especializar el modelo exclusivamente en matrículas del contexto del vídeo.
-\end{enumerate}
+#### Entrenamiento en dos fases
 
-\vspace{0.4cm}
-\subsection*{Entrenamiento inicial}
+##### **1) Entrenamiento inicial**
+Se entrenó el modelo aplicando técnicas de *data augmentation* para mejorar su capacidad de generalización:
 
-Se emplearon aumentos agresivos como \textit{mosaic}, \textit{mixup} y variaciones de brillo/color. Esto permite que el modelo aprenda a detectar matrículas bajo variaciones fuertes de iluminación y perspectiva.
+| Parámetro | Descripción |
+|-----------|-------------|
+| `mosaic` | Combina 4 imágenes distintas en una sola, cambiando contexto y fondo. Esto ayuda a detectar matrículas en posiciones poco comunes. |
+| `mixup`  | Superpone parcialmente dos imágenes mezclando sus píxeles. Esto obliga al modelo a ser más robusto ante solapamientos y ruido. |
+| `degrees` | Rotación aleatoria de la imagen para aumentar variabilidad. |
+| `scale` | Zoom aleatorio (acercar / alejar). |
+| `shear` | Deforma la imagen simulando perspectiva. |
+| `flipud` | Invierte verticalmente algunas imágenes. |
 
-\begin{verbatim}
-torch.cuda.empty_cache()
+Este entrenamiento produce un modelo generalista capaz de detectar matrículas en múltiples situaciones.
 
-model = YOLO('yolo11s.pt') 
+##### **2) Fine-tuning**
+En esta fase se desactivan la mayoría de aumentos y se ajusta el modelo específicamente a las condiciones del vídeo final (ángulo, color, distancia), mejorando la precisión real.
 
-model.train(
-    data='dataset/data.yaml',
-    epochs=50,
-    imgsz=960,
-    batch=4,
-    name='matriculas_yolo_v2',
-    device='cuda',
-    hsv_h=0.015,
-    hsv_s=0.7,
-    hsv_v=0.4,
-    degrees=5, 
-    translate=0.10,
-    scale=0.6,  
-    shear=2.0,
-    flipud=0.3,
-    mixup=0.1,
-    mosaic=1.0
-)
-\end{verbatim}
+ - Segunda: ajuste fino reduciendo las transformaciones para especializar el modelo exclusivamente en matrículas del contexto del vídeo.
 
-\vspace{0.4cm}
-\subsection*{Fine-tuning}
+#### Modelo Final
 
-Posteriormente, se redujeron los aumentos para estabilizar la convergencia y mejorar la precisión en casos reales del vídeo analizado.
+Al terminar la segunda fase, el modelo resultante se almacenó como:
+`matriculas_yolo_v2_finetuned`
+Este modelo se utiliza posteriormente para la detección de matrículas en vídeo.
 
-\begin{verbatim}
-torch.cuda.empty_cache()
 
-model = YOLO('runs/detect/matriculas_yolo_v2/weights/best.pt')
+### Detección en el vídeo
 
-model.train(
-    data='dataset/data.yaml',
-    epochs=20,
-    imgsz=960,
-    batch=2,
-    device='cuda',
-    mosaic=0.0,
-    mixup=0.0,
-    degrees=0,
-    translate=0.05,
-    scale=0.4,
-    shear=0,
-    flipud=0.1,
-    name='matriculas_yolo_v2_finetuned'
-)
-\end{verbatim}
+Una vez entrenado el modelo, se procede al procesamiento del vídeo para realizar:
 
-\noindent
-Tras el entrenamiento, el modelo final se almacenó como:
+- Detección de personas y vehículos.
+- Seguimiento (tracking) de cada objeto mediante identificadores.
+- Detección y reconocimiento de matrículas.
+- Ocultar el rostro de las personas para hacerlas anónimas.
+- Guardar el video del resultado final.
+- Generar un archivo `.csv` con las comparativas.
 
-\begin{center}
-\texttt{runs/detect/matriculas\_yolo\_v2\_finetuned/weights/best.pt}
-\end{center}
+Para ello se utilizan dos modelos YOLO diferentes:
 
-Este modelo se utiliza posteriormente para la detección de matrículas en vídeo y para la comparación entre OCRs.
+| Modelo | Función |
+|--------|---------|
+| `yolo11s.pt` | Detecta y sigue personas y vehículos. |
+| `matriculas_yolo_v2_finetuned.pt` | Modelo entrenado en el paso anterior para la detección de matrículas. |
 
+Además, se emplea `EasyOCR` usado para leer el texto de la matrícula.
 
-#### 1.1 Dibujar el botón
+#### **Seguimiento de objetos (Tracking)**
 
-Esta función de lo único que se encarga es de obtener la imagen y unas coordenadas y sobre ella dibujar un botón con el que posteriormente se podrá hacer clic para contar el dinero
+El seguimiento se realiza mediante el algoritmo **ByteTrack**, lo que permite asignar un identificador único a cada objeto detectado y mantenerlo a lo largo del vídeo.  
+De esta forma, se evita contar el mismo vehículo o persona más de una vez.
+Cada clase posee su propio contador independiente:
+ - Person (personas)
+ - Car (coches)
+ - Truck (Camiones)
+ - Motorcycle (motos)
+ - Bus (Guaguas)
 
-#### 1.2 Evento del clic
+Además, se asigna un código de identificación a cada clase
 
-La segunda función desarrollada detecta las coordenadas del clic en pantalla y si dichas coordenadas coinciden dentro del botón previamente dibujado se procederá a llamar a la siguiente función que se basará en contar dinero. 
+#### **Anonimización de personas**
 
-En el caso de que no se haya hecho clic en el botón, se procederá a intentar detectar sobre qué moneda se ha clicado (cuanto más cerca del centro de la moneda se clique mejor). Una vez detectada la moneda simplemente se actualizará la variable ```circulo_sel``` que se usará para calcular el total del dinero
+Para respetar la privacidad, se aplica un **pixelado automático** en la parte superior de los cuadros de detección de personas (se pixela la parte superior asumiendo que tapa la cara de la persona).  
 
-#### 1.3 Calcular dinero
+#### **Detección y lectura de matrículas**
 
-Lo primero que se plantea es crear 2 diccionarios que se usarán:
- - El primero es el diccionario ```diametro_monedas_real```: que cuenta con el diámetro de las monedas en el mundo real
- - El segundo es el diccionario ```diametro_monedas_foto```: que se inicializa a vacío para luego rellenarlo con las medidas que corresponderían a la imagen
+Solo en los objetos clasificados como vehículos (coche, autobús, camión, moto) se recorta la región, se le dibuja un cuadrado amarillo al rededor de la matrícula y se envía a EasyOCR para que sobre el video aparezca lo que detecta que pone.  
+#### **Generación de resultados**
 
-La función empieza con un diccionario que cuenta con una string y un array para determinar el número de veces que aparece una moneda de un valor en la imagen
+El sistema produce dos archivos:
 
-Posteriormente se escalarán los diametros rellenando el segundo diccionario explicado y ya no estará vacío
+| Archivo | Descripción |
+|---------|-------------|
+| `resultado_final.mp4` | Vídeo original con detecciones, seguimiento, matrículas y anonimización. |
+| `detecciones_tracking.csv` | Datos de cada detección con coordenadas, ID y texto de la matrícula. |
 
-El siguiente paso será detectar todos los círculos de la imagen y con ellos calcular a que moneda hace referencia. Para cada uno de estos círculos una vez detectado su valor, se añadirá al diccionario para contar las monedas.
+Ejemplo de línea del CSV:
 
-Como paso final se sumarán todas las monedas obtenidas y se creará un texto en la esquina inferior derecha de la imagen con el valor total
+| frame | tipo_objeto | conf | track_id | x1 | y1 | x2 | y2 | conf_matricula | mx1 | my1 | mx2 | my2 | texto_matricula |
+|-------|-------------|------|----------|----|----|----|----|----------------|-----|-----|-----|-----|-----------------|
+| 84 | car | 0.87 | C-3 | 651 | 310 | 732 | 360 | 0.91 | 675 | 338 | 720 | 352 | "1770 JYG" |
 
-#### 1.4 Código principal
 
-En este código se inicializa la imagen, se realiza un umbralizado y se aplica Canny y posteriormente Hough para detectar los círculos (los cuales se introducen en una variable) y se declaran algunas otras variables como las coordenadas del botón o la llamada del ratón para el clic.
+### Comparativa de OCRs
 
-Las siguientes imágenes son las usadas para hacer las pruebas:
+Para evaluar el rendimiento de dos modelos de OCR se han comparado para analizarlos:
 
-![Monedas 1](Monedas.jpg)
+| OCR | Descripción | Ventajas | Inconvenientes |
+|-----|-------------|----------|----------------|
+| **EasyOCR** | Modelo basado en Deep Learning | Buen rendimiento en imágenes reales y con ruido | Más lento |
+| **Tesseract** | Motor OCR clásico basado en reglas | Muy rápido y ligero | Sensible al ruido e iluminación, peor precisión |
 
-![Monedas 2](Monedas2.jpg)
+#### Metodología de evaluación
 
-Y a continuación se podrán observar ambos resultados:
+Se seleccionaron **50 imágenes de matrículas** recortadas del dataset hasta quedarse solo con la matrícula en sí en primer plano para que pueda ser fácilmente reconocida.
 
- - El primero da el resultado exacto el cual serían esos 3,88€
+Para cada imagen se midió:
 
-![Monedas Resultado](Resultado_monedas1.png)
+- **Texto reconocido por EasyOCR**
+- **Texto reconocido por Tesseract**
+- **Tiempo de inferencia (ms)**
+- **Acierto** respecto a la matrícula real anotada manualmente.
 
- - El segundo detecta bien todas las monedas pero por deformaciones de la cámara o sombras lo que más se ha a podido aproximar es conseguir el siguiente resultado, muy cerca del real:
+El proceso se automatizó generando un archivo CSV con el siguiente formato:
 
-![Monedas Resultado](Resultado_monedas2.png)
+| imagen | matricula_real | easyocr_texto | tesseract_texto | acierto_easyocr | tiempo_easyocr(ms) | tiempo_tesseract(ms) |
+|--------|----------------|---------------|-----------------|-----------------|--------------------|----------------------|
 
-### Tarea 2: Extraer Características
+#### Resultados
 
-Al igual que la tarea anterior se ha dividido en funciones este apartado
+A partir de las 50 imágenes de matrículas analizadas se han obtenido los siguientes promedios:
 
-#### 2.1 Obtener contornos
+| Métrica | EasyOCR | Tesseract |
+|--------|--------|-----------|
+| **Precisión de lectura** | **≈ 40–60%** (dependiendo de la imagen) | **≈ 0–15%** |
+| **Tiempo medio (ms)** | ~ **80–120 ms** | ~ **160–210 ms** |
 
-La primera función a definir es la encargada de obtener los contornos de cada uno de los fragmentos de la imagen. Para ello se realizan 6 pasos:
+> **EasyOCR obtiene una precisión mayor**.
+>
+> **Tesseract falla en casi todas las matrículas**.
 
- 1. Se suaviza la imagen para eliminar el exceso de ruido que se encuentra entre los fragmentos al pasar la imagen a grises
- 2. Se utilizará Canny para detectar los bordes de los fragmentos: ```cv2.Canny(blur, 10, 40)```
- 3. Tras hacer pruebas se observó que la mayoría de los bordes están mal definidos por lo que para ayudar a mejorarlos se procederá a intentar unir los bordes y dilatarlos un poco para su mejor detección a posteriori:
-  - ```cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2,2))```
-  - ```cv2.dilate(edges, kernel, iterations=2)```
- 4. Los fragmentos que aún tengan algún hueco serán cerrados en este paso
- 5. En caso de aún así detectar algún contorno demasiado pequeño, se establece un área mínima de fragmentos indicando que los que encuentre menor a dicho área no los considere
- 6. Una vez realizado todo esto se obtienen los contornos con la función ```findContours()```.
+---
 
-#### 2.2 Calcular métricas
+#### Visualización de resultados
 
-Para poder obtener unas métricas para poder distinguir los fragmentos en la imagen final se han utilizado 3 imágenes con cada una un tipo de fragmento para poder analizar sus características en común. Estas son dichas imágenes:
+A continuación se muestran dos gráficas comparativas obtenidas en GoogleSheets:
 
-![Fragmentos](fragment-03-olympus-10-01-2020.JPG)
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/example_precision.png" width="450">
+</p>
 
-![Pellet](pellet-03-olympus-10-01-2020.JPG)
+<p align="center">
+  <em>Figura 1: Porcentaje de acierto de EasyOCR vs Tesseract</em>
+</p>
 
-![Alquitrán](tar-03-olympus-10-01-2020.JPG)
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/example_time.png" width="450">
+</p>
 
-Para medir los datos se ha decidido obtener las siguientes métricas:
+<p align="center">
+  <em>Figura 2: Tiempo de inferencia medio por OCR</em>
+</p>
 
- - Área: Obtenida con ```cv2.contourArea()```
- - Perímetro: Obtenido con ```cv2.arcLength()```
- - Compacidad
- - Relación del área de la partícula con el contenedor
- - Relación del ancho y el alto del contenedor
- - Relación entre los ejes de la elipse ajustada
- - Relación entre las distancias menor y mayor al contorno
- - Nivel de intensidad de los píxeles
- - Nivel de circunferencia del fragmento
+---
 
-Todos estos datos se pasarán a un dataframe que se utilizará posteriormente
+#### Conclusiones
 
-#### 2.3 Clasificación de fragmentos
-
-El objetivo final se basa en dentro de la siguiente imagen intentar detectar a qué tipo de fragmento equivale cada uno.
-
-![Alquitrán](MPs_test.jpg)
-
-Para ello en esta nueva función primero asignamos un color para cada tipo de fragmento (este será el color del contorno del mismo así como de la letra de su inicial que aparecerá en la imagen final). Los colores asignados son:
-
- - Fragmento: Rojo
- - Piedras: Verde
- - Alquitrán: Azul
-
-Lo siguiente es obtener las medidas previamente calculadas y además se decidió escalarlas en función de sobre todo 2 características, la intensidad de los píxeles y el grado de circularidad pues estas 2 medidas ayudan a diferenciar los fragmentos. Aparte se utilizará un clasificador de vecinos para mayor acierto
-
-Una vez hecho todo lo anterior se procederá a calcular las métricas de cada uno de los contornos de la imagen final y se ajustarán al tipo de fragmento decidido. Tras ello se dibujará su contorno y su inicial con el texto indicado para mostrarlo sobre la imagen.
-
-Dentro de esta función también se leen los fragmentos reales obtenidos del archivo "MPs_test_bbs.csv" para poder crear la mariz de confusión.
-
-Gracias a una sugerencia de la inteligencia artifical, se implementó la función llamada ```calcular_iou``` que se utiliza para ayudar a detectar que etiqueta dentro del csv corresponde al fragmento calculado. Con esto, se crean 2 arrays, una llamada ```y_true``` y otra llamada ```y_pred```. Con ambas arrays se usará la función ```confusion_matrix``` y el nombre de las etiquetas ("FRA", "TAR" y "PEL") para crear la matriz cuyo resultado es el siguiente:
-
-![Matriz de confusión](matriz_confusion.png)
-
-#### 2.4 Código principal
-
-En este extracto de código se definen las imágenes a analizar, algunas variables globales y se inicia desde aquí el cálculo de las métricas de las imágenes de prueba así como la clasificación final de la imagen a analizar.
-
-El resultado obtenido, a pesar de no ser perfecto, muestra un porcentaje de acierto variado, los fragmentos y los pellets le cuesta más obtenerlos pero con los fragmentos de alquitrán tiene mayor acierto, además que detecta todos los fragmentos y no deja ninguno sin analizar. La separación de los fragmentos analizados:
-
-![Alquitrán](Resultado_final.png)
-
-
+- EasyOCR **reconoce matrículas de manera más robusta**, incluso en movimiento o baja calidad.
+- Tesseract **no es adecuado** para matrículas de vídeo real sin un preprocesado muy agresivo.
+- El tiempo adicional de EasyOCR **compensa su mejora en precisión**.
+- Por tanto, **EasyOCR** es la opción utilizada para el sistema final integrado en el vídeo.
 
 
 Saúl Expósito Morales
