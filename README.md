@@ -162,8 +162,8 @@ A partir de las 50 imágenes de matrículas analizadas se han obtenido los sigui
 
 | Métrica | EasyOCR | Tesseract |
 |--------|--------|-----------|
-| **Precisión de lectura** | **≈ 40–60%** (dependiendo de la imagen) | **≈ 0–15%** |
-| **Tiempo medio (ms)** | ~ **80–120 ms** | ~ **160–210 ms** |
+| **Precisión de lectura** | **≈ 30–40%** (dependiendo de la imagen) | **≈ 0–5%** |
+| **Tiempo medio (ms)** | ~ **50–100 ms** | ~ **180–210 ms** |
 
 > **EasyOCR obtiene una precisión mayor**.
 >
