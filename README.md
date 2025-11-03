@@ -32,13 +32,13 @@ El dataset cuenta con imágenes de matrículas tomadas desde distintos ángulos,
 
 <table align="center">
   <tr>
-    <td><img src="https://github.com/user-attachments/assets/eac9c54a-1089-4cae-85dd-84376bfa9e3b" width="120"/></td>
-    <td><img src="https://github.com/user-attachments/assets/3056823d-8e8e-406f-a51a-ab624c45fadf" width="120"/></td>
-    <td><img src="https://github.com/user-attachments/assets/c9aa2527-cce7-4d6d-b612-e88a44fed15f" width="120"/></td>
-    <td><img src="https://github.com/user-attachments/assets/86d0ed62-0230-4504-9c10-f48939535cd9" width="120"/></td>
-    <td><img src="https://github.com/user-attachments/assets/b543cf1d-6f90-49dc-b0fe-6a63c9c95d24" width="120"/></td>
-    <td><img src="https://github.com/user-attachments/assets/35a61d12-4c21-4f5d-85cf-52779d41dffd" width="120"/></td>
-    <td><img src="https://github.com/user-attachments/assets/39108531-2410-4052-a3c9-991014f833fb" width="120"/></td>
+    <td><img src="assets/img1.jpg" width="120"/></td>
+    <td><img src="assets/img2.jpg" width="120"/></td>
+    <td><img src="assets/img3.jpg" width="120"/></td>
+    <td><img src="assets/img4.jpg" width="120"/></td>
+    <td><img src="assets/img5.jpg" width="120"/></td>
+    <td><img src="assets/img6.jpg" width="120"/></td>
+    <td><img src="assets/img7.jpg" width="120"/></td>
   </tr>
 </table>
 
@@ -125,6 +125,11 @@ Ejemplo de línea del CSV:
 |-------|-------------|------|----------|----|----|----|----|----------------|-----|-----|-----|-----|-----------------|
 | 84 | car | 0.87 | C-3 | 651 | 310 | 732 | 360 | 0.91 | 675 | 338 | 720 | 352 | "1770 JYG" |
 
+Fragmento del video: 
+
+<img width="3840" height="1080" alt="image" src="assets/gif1.gif" />
+
+
 
 ### Comparativa de OCRs
 
@@ -171,7 +176,7 @@ A partir de las 50 imágenes de matrículas analizadas se han obtenido los sigui
 A continuación se muestran dos gráficas comparativas obtenidas en GoogleSheets:
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/example_precision.png" width="450">
+  <img width="450" alt="image" src="https://github.com/user-attachments/assets/560b57c8-54d1-4e8d-8709-16b6386db9f7" />
 </p>
 
 <p align="center">
@@ -179,7 +184,8 @@ A continuación se muestran dos gráficas comparativas obtenidas en GoogleSheets
 </p>
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/example_time.png" width="450">
+  <img width="450" alt="image" src="https://github.com/user-attachments/assets/cce56033-0721-40bb-af42-5f4a14c06a87" />
+
 </p>
 
 <p align="center">
@@ -195,6 +201,11 @@ A continuación se muestran dos gráficas comparativas obtenidas en GoogleSheets
 - El tiempo adicional de EasyOCR **compensa su mejora en precisión**.
 - Por tanto, **EasyOCR** es la opción utilizada para el sistema final integrado en el vídeo.
 
+#### Extra
+
+Para acceder a todas las carpetas con el dataset, los videos y el modelo entrenado se usará el siguiente enlace a una carpeta de Google Drive:
+
+https://drive.google.com/drive/folders/1tRtH5754omyO210dmpvrD-rsF6KSAAMZ?usp=sharing
 
 Saúl Expósito Morales
 
