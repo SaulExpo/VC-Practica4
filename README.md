@@ -69,6 +69,10 @@ Al terminar la segunda fase, el modelo resultante se almacenó como:
 `matriculas_yolo_v2_finetuned`
 Este modelo se utiliza posteriormente para la detección de matrículas en vídeo.
 
+En la siguiente gráfica se puede observar como tanto la train_loss como la val_boss descienden a la vez lo que indica que el entrenamiento fue exitoso. Además se ve que el porcentaje de hacierto superó el 90% lo que ayuda a recalcar la gran eficacia de entrenamiento del modelo
+
+<img width="1594" height="795" alt="image" src="https://github.com/user-attachments/assets/a4d8d3de-5b25-47b8-aede-32c97f0133b2" />
+
 
 ### Detección en el vídeo
 
@@ -89,6 +93,8 @@ Para ello se utilizan dos modelos YOLO diferentes:
 | `matriculas_yolo_v2_finetuned.pt` | Modelo entrenado en el paso anterior para la detección de matrículas. |
 
 Además, se emplea `EasyOCR` usado para leer el texto de la matrícula.
+
+
 
 #### **Seguimiento de objetos (Tracking)**
 
